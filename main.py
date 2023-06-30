@@ -107,4 +107,4 @@ lista = ListaProveedores()
 
 lista.agregar_proveedor(1, "La fonda del tío", "Juan Gomez", "Lavalle 747", "Restaurante")
 
-#lista.listar_proveedores()
+lista.listar_proveedores()

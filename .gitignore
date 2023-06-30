@@ -1,0 +1,18 @@
+# Archivos generados por Python
+*.pyc
+__pycache__/
+
+# Entorno virtual
+venv/
+
+# Archivos de configuración local
+*.env
+
+# Archivos de registro y salida
+*.log
+*.txt
+
+
+
+# Carpeta de dependencias
+/venv/

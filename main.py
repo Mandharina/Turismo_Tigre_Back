@@ -1,4 +1,5 @@
 import sqlite3
+from flask import Flask, jsonify, request
 
 DATABASE = 'listaProvedores.db'
 
@@ -43,10 +44,10 @@ class Proveedor:
         self.direccion = direccion
         self.rubro = rubro
 
-    def modificar(self,nuevo_nombre, nuevo_propietario, nuevo_direccion, nuevo_rubro):
+    def modificar(self,nuevo_nombre, nuevo_propietario, nueva_direccion, nuevo_rubro):
         self.nombre = nuevo_nombre
         self.propietario = nuevo_propietario
-        self.direccion = nuevo_direccion
+        self.direccion = nueva_direccion
         self.rubro = nuevo_rubro
 
 #------------------------------------------------
@@ -103,8 +104,57 @@ class ListaProveedores:
         else:
             print("Proveedor no encontrado.")   
 #..........................................................................................
+app = Flask(__name__)
+#CORS(app)
+
 lista = ListaProveedores()
+#-----------------------------------------------------------------------------------------------
+#Ruta para buscar un producto según rubro, ver si esto devuelve 1 solo campo o todos los 
+#coincidentes 
 
-lista.agregar_proveedor(1, "La fonda del tío", "Juan Gomez", "Lavalle 747", "Restaurante")
+@app.route('/buscar/<text:rubro>', methods=['GET'])
+def buscar_rubro(rubro):
+    resultados = lista.consultar_producto(rubro)
+    if resultados:
+        return jsonify({
+            'nombre' : resultados.nombre,
+            'direccion' : resultados.direccion,
+            'rubro' : resultados.rubro
+        }), 200
+    return jsonify({'message': 'Actualmente no contamos con infomación de ese rubro'}), 404
 
-lista.listar_proveedores()
+#---------------------------------------------------------------------------------------------------
+#Lista de proveedores
+
+@app.route('/proveedores', methods=['GET'])
+def lista_de_proveedores():
+    return lista.listar_proveedores
+
+#-------------------------------------------------------------------------------
+#Agregar proveedor a la lista
+
+@app.route('/proveedores', methods=['POST'])
+def agregar_proveedor():
+        codigo = request.json.get('codigo')
+        nombre = request.json.get('nombre')
+        propietario = request.json.get('propietario')
+        direccion = request.json.get('direccion')
+        rubro = request.json.get('rubro')
+        return lista.agregar_proveedor(codigo, nombre, propietario,direccion, rubro), 200
+
+
+#------------------------------------------------------------------------------------
+#Modificar proveedor
+@app.route('/proveedores/<int:codigo>', methods=['PUT'])
+def modificar_proveedor(codigo):
+    nuevo_nombre = request.json.get('nombre')
+    nuevo_propietario = request.json.get('propietario')
+    nueva_direccion = request.json.get('direccion')
+    nuevo_rubro = request.json.get('rubro')
+
+#--------------------------------------------------------------------------------------
+#Eliminar proveedor
+@app.route('/proveedores/<int:codigo>', methods=['DELETE'])
+def eliminar_proveedor(codigo):
+    return lista.eliminar_proveedor(codigo)
+

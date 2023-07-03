@@ -1,5 +1,6 @@
 import sqlite3
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 
 DATABASE = 'listaProvedores.db'
 
@@ -105,7 +106,7 @@ class ListaProveedores:
             print("Proveedor no encontrado.")   
 #..........................................................................................
 app = Flask(__name__)
-#CORS(app)
+CORS(app)
 
 lista = ListaProveedores()
 #-----------------------------------------------------------------------------------------------

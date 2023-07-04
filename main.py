@@ -60,13 +60,12 @@ class ListaProveedores:
     def agregar_proveedor(self, codigo, nombre, propietario, direccion, rubro):
         proveedor_existente = self.consultar_proveedor(codigo)
         if proveedor_existente:
-            print("Ese proveedor ya fue dado de alta.")
-            return False
+            return jsonify({'message':'Ese proveedor ya fue dado de alta.'}),400
 
-        
+        nuevo_proveedor = Proveedor(codigo, nombre, propietario, direccion, rubro)
         self.cursor.execute("INSERT INTO proveedores VALUES (?, ?, ?, ?,?)", (codigo, nombre, propietario, direccion, rubro))
         self.conexion.commit()
-        return True
+        return jsonify ({'message':'Proveedor agregado con éxito'}), 200
 
     def consultar_proveedor(self, codigo):
         self.cursor.execute("SELECT * FROM proveedores WHERE codigo = ?", (codigo,))
@@ -83,27 +82,25 @@ class ListaProveedores:
             self.cursor.execute("UPDATE proveedores SET nombre = ?, propietario = ?, direccion = ?, rubro = ? WHERE codigo = ?",
                                 (nuevo_nombre, nuevo_propietario, nuevo_direccion, nuevo_rubro))
             self.conexion.commit()
+            return jsonify({'message':'Proveedor modificado con éxito'}), 200
+        return jsonify({'message':'Proveedor no encontrado'})
 
     def listar_proveedores(self):
-        print("-" * 30)
         self.cursor.execute("SELECT * FROM proveedores")
         rows = self.cursor.fetchall()
+        proveedores = []
         for row in rows:
             codigo, nombre, propietario, direccion, rubro  = row
-            print(f"Código: {codigo}")
-            print(f"Nombre: {nombre}")
-            print(f"Propietario: {propietario}")
-            print(f"Dirección: {direccion}")
-            print(f"Rubro: {rubro}")
-            print("-" * 30)
+            proveedor = {'codigo': codigo, 'nombre':nombre, 'propietario':propietario, 'dirección':direccion, 'rubro':rubro}
+            proveedores.append(proveedor)
+        return jsonify(proveedores), 200
 
     def eliminar_proveedor(self, codigo):
         self.cursor.execute("DELETE FROM proveedores WHERE codigo = ?", (codigo,))
-        if self.cursor.rowcount > 0:
-            print("Proveedor eliminado.")
+        if self.cursor.rowcount > 0:            
             self.conexion.commit()
-        else:
-            print("Proveedor no encontrado.")   
+            return jsonify({'message': 'Proveedor eliminado definitivamente.'}), 200
+        return jsonify ({'message': 'Proveedor no encontrado'}), 404 
 #..........................................................................................
 app = Flask(__name__)
 CORS(app)
@@ -113,9 +110,9 @@ lista = ListaProveedores()
 #Ruta para buscar un producto según rubro, ver si esto devuelve 1 solo campo o todos los 
 #coincidentes 
 
-@app.route('/buscar/<text:rubro>', methods=['GET'])
-def buscar_rubro(rubro):
-    resultados = lista.consultar_producto(rubro)
+@app.route('/proveedores/<int:codigo>', methods=['GET'])
+def buscar_proveedor(codigo):
+    resultados = lista.consultar_proveedor(codigo)
     if resultados:
         return jsonify({
             'nombre' : resultados.nombre,
@@ -129,7 +126,7 @@ def buscar_rubro(rubro):
 
 @app.route('/proveedores', methods=['GET'])
 def lista_de_proveedores():
-    return lista.listar_proveedores
+    return lista.listar_proveedores()
 
 #-------------------------------------------------------------------------------
 #Agregar proveedor a la lista
@@ -152,6 +149,7 @@ def modificar_proveedor(codigo):
     nuevo_propietario = request.json.get('propietario')
     nueva_direccion = request.json.get('direccion')
     nuevo_rubro = request.json.get('rubro')
+    return lista.modificar_proveedor(codigo, nuevo_nombre, nuevo_propietario, nueva_direccion, nuevo_rubro)
 
 #--------------------------------------------------------------------------------------
 #Eliminar proveedor
